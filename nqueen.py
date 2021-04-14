@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.0"""
+"""The N-Queens problem. Version 1.1"""
 
 import argparse
 import sys
@@ -31,11 +31,20 @@ try_row = 1
 # The next column to try placing a Queen.
 queen_column = 1
 
-# Count the number of nodes visited.
+# Count the number of nodes visited for one solution.
 node_count = 0
+
+# Count the total number of nodes visited.
+total_node_count = 0
 
 # A count used to make neat output for the progress functions.
 progress_count = 0
+
+# Count the number of solutions when asking for all of them.
+solution_count = 0
+
+# Find all solutions?
+find_all_solutions = False
 
 def show_advancing():
     """Show that we are advancing in finding a solution"""
@@ -63,13 +72,29 @@ def show_retreating():
 
 def show_found_solution():
     """show that we have found a solution"""
+    global node_count
+    global solution_count
+
     if (_SHOW_PROGRESS):
         print("!")
+    print("Searched {}".format(node_count), "nodes.")
+    solution_count += 1
+    node_count = 0
 
 def show_no_solution():
     """Show that we did not find a solution"""
     if (_SHOW_PROGRESS):
         print("@")
+    print("Searched {}".format(node_count), "nodes.")
+
+def show_no_more_solutions():
+    """Show that we did not find more solutions"""
+    global node_count
+
+    if (_SHOW_PROGRESS):
+        print("#")
+    print("Searched {}".format(node_count), "nodes.")
+    node_count = 0
 
 def print_solution():
     """print a solution"""
@@ -149,12 +174,14 @@ def advance():
     global try_row
     global queen_column
     global node_count
+    global total_node_count
 
     show_advancing()
     queen_location[queen_column] = try_row
     try_row = 1
     queen_column += 1
     node_count += 1
+    total_node_count += 1
     if (queen_column > number_of_columns):
         return False
     else:
@@ -189,8 +216,10 @@ def seek_another_segment():
 
 def search():
     """search for a solution and return True if found else False"""
+    global queen_location
     global queen_column
     global try_row
+    global node_count
 
     # Return value.
     # True if we find a solution; False otherwise.
@@ -205,23 +234,54 @@ def search():
     while (more_to_search):
         if (seek_another_segment()):
             # We found a place to put the Queen. (try_row, queen_column).
-            # Store the info and see if we are done.
+            # Store the info and see if we have a solution.
+            # Note: After calling advance() we have
+            #       queen_location[queen_column] = try_row
+            #       try_row = 1
+            #       queen_column += 1
             if (advance() == False):
-                # We found a solution.
+                # We found a solution. NB: queen_column = number_of_columns+1
                 show_found_solution()
+                # Got a solution.
+                print_solution()
                 success_flag = True
-                more_to_search = False
+                if (find_all_solutions):
+                    # A way to break into the debugger.
+                    # import pdb; pdb.set_trace()
+                    if (retreat() == False):
+                        more_to_search = False
+                        show_no_more_solutions()
+                    else:
+                        pass
+                else:
+                    more_to_search = False
             else:
+                # queen_column <= number_of_columns
                 pass
         else:
             # We could not place the current Queen.
             # Try to back out the last Queen assigment and prepare
             # to try the next possibility.
+            # Note: After calling retreat() we have
+            #       queen_column -= 1
+            #       As long as queen_column > 0 we have
+            #       try_row = queen_location[queen_column] + 1
+            #       queen_location[queen_column] = 0
             if (retreat() == False):
-                # No solution.
-                show_no_solution()
-                success_flag = False
                 more_to_search = False
+                if (find_all_solutions):
+                    if (success_flag):
+                        # We already found a solution.
+                        show_no_more_solutions()
+                        pass
+                    else:
+                        # No solution.
+                        show_no_solution()
+                else:
+                    # No solution.
+                    show_no_solution()
+            else:
+                pass
     return success_flag
 
 def check_num(s):
@@ -244,7 +304,7 @@ def sanity_check_args(start, number_of_problems):
     if (check_num(number_of_problems)):
         number_of_problems = int(number_of_problems)
     else:
-        print('error: {}'.fromat(number_of_problems), ' is not a number.')
+        print('error: {}'.format(number_of_problems), ' is not a number.')
         sys.exit(1)
 
     if (start <= 0):
@@ -266,7 +326,9 @@ def initialize(size):
     global number_of_columns
     global number_of_rows
     global node_count
+    global total_node_count
     global progress_count
+    global solution_count
     
     # Zero the Queen locations.
     for column in range(1, _MAX_COLUMNS+1):
@@ -282,29 +344,41 @@ def initialize(size):
 	
     # Set our counters and such.
     node_count = 0
+    total_node_count = 0
     progress_count = 0
+    solution_count = 0
 
 def run(args):
     """run the program with args already parsed."""
+    global find_all_solutions
 
     sanity_check_args(args.start, args.number_of_problems)
     start = int(args.start)
     number_of_problems = int(args.number_of_problems)
+    if (args.all):
+        find_all_solutions = True
     #print("start =", start)
     #print("number_of_problems =", number_of_problems)
+    #print("args.all=", args.all)
+    #print("find_all_solutions=", find_all_solutions)
 
     for size in range(start, start+number_of_problems):
         initialize(size)
         print("Looking for a solution to the {}".format(size),
               "Queen problem.")
         if (search()):
-            # Got a solution.
-            print_solution()
+            # Got at least one solution.
+            if (find_all_solutions):
+                print("All solutions found.")
+            else:
+                pass
         else:
             # No solution.
             print("No solution!")
 
-        print("Searched {}".format(node_count), "nodes.")
+        if (find_all_solutions):
+            print("Total solutions found {}".format(solution_count))
+        print("Searched {}".format(total_node_count), "total nodes.")
         print("----------------------------------------")
 
 def main():
@@ -314,6 +388,8 @@ def main():
                         help='miniumn board starting size')
     parser.add_argument('number_of_problems',
                         help='number of problems sizes to do')
+    parser.add_argument('--all', action='store_true',
+                        help="print all solutions")
     parser.set_defaults(func=run)
     args = parser.parse_args()
     args.func(args)
