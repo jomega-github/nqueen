@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.2"""
+"""The N-Queens problem. Version 1.3"""
 
 import argparse
 import sys
+import time
 
 # Constants
 # The maximum number of columns on the chessboard.
@@ -21,7 +22,6 @@ show_count_only = False
 show_node_count = False
 # Do we display total node counts?
 show_total_node_count = False
-
 # Actual number of columns on the chessboard.
 number_of_columns = 8
 # Actual number of rows on the chessboard.
@@ -45,6 +45,15 @@ progress_count = 0
 solution_count = 0
 # Find all solutions?
 find_all_solutions = False
+
+# Optimization helper matrices
+slash_code = [[0 for i in range(0, number_of_rows+1)]
+              for j in range(0, number_of_columns+1)]
+backslash_code = [[0 for i in range(0, number_of_rows+1)]
+                  for j in range(0, number_of_columns+1)]
+row_lookup = [False] * (number_of_rows+1)
+slash_code_lookup = [False] * (number_of_columns + number_of_rows)
+backslash_code_lookup = [False] * (number_of_columns + number_of_rows)
 
 def show_advancing():
     """Show that we are advancing in finding a solution"""
@@ -113,38 +122,50 @@ def print_solution():
         print()
     print("---------------------")
 
-def queen_attacks_square(sx, sy, queen_x, queen_y):
-    """Return True if the square (sx, sy) is attacked by the Queen on
-       square (queen_x, queen_y). Otherwise return False.
+def queen_attacks_square(sc, sr, queen_c, queen_r):
+    """Return True if the square (sc, sr) is attacked by the Queen on
+       square (queen_c, queen_r). Otherwise return False.
        We consider the square the Queen is on to be attacked.
 
     """
-    if (sx == queen_x):
+    if (sc == queen_c):
         return True
 
-    if (sy == queen_y):
+    if (sr == queen_r):
         return True;
 
-    if ((sy - queen_y) == (sx - queen_x)):
+    if ((sr - queen_r) == (sc - queen_c)):
         return True;
 
-    if ((sy - queen_y) == (queen_x - sx)):
+    if ((sr - queen_r) == (queen_c - sc)):
         return True;
 	
     return False;
 
-def under_attack(sx, sy):
-    """Return True if the square (sx, sy) is under attack by the Queens
+def under_attack(sc, sr):
+    """Return True if the square (sc, sr) is under attack by the Queens
        already placed in queen_location. Otherwise return False.
 
     """
     for column in range(1, number_of_columns+1):
         if (queen_location[column] != 0):
             # We have a Queen placed in this column.
-            if (queen_attacks_square(sx, sy, queen_location[column], column)):
-                # The Queen is attacking (sx, sy).
+            if (queen_attacks_square(sc, sr, column, queen_location[column])):
+                # The Queen is attacking (sc, sr).
                 return True
-    # No Queen is attacking (sx, sy).
+    # No Queen is attacking (sc, sr).
+    return False
+
+def optimized_under_attack(sc, sr):
+    """Return True if the square (sc, sr) is under attack by the Queens
+       already placed in queen_location. Otherwise return False.
+
+    """
+
+    if (slash_code_lookup[slash_code[sr][sc]]
+        or backslash_code_lookup[backslash_code[sr][sc]]
+        or row_lookup[sr]):
+        return True
     return False
 
 def retreat():
@@ -166,8 +187,12 @@ def retreat():
         return False
     else:
         # Try the row after the one we tried last.
-        try_row = queen_location[queen_column] + 1
+        queen_row = queen_location[queen_column]
+        try_row = queen_row + 1
         # Remove the Queen from the board.
+        row_lookup[queen_row] = False
+        slash_code_lookup[slash_code[queen_row][queen_column]] = False
+        backslash_code_lookup[backslash_code[queen_row][queen_column]] = False
         queen_location[queen_column] = 0
         return True
 
@@ -215,6 +240,9 @@ def advance():
 
     show_advancing()
     queen_location[queen_column] = try_row
+    row_lookup[try_row] = True
+    slash_code_lookup[slash_code[try_row][queen_column]] = True
+    backslash_code_lookup[backslash_code[try_row][queen_column]] = True
     try_row = 1
     queen_column += 1
     node_count += 1
@@ -230,7 +258,8 @@ def admissible():
 
     """
 
-    if (under_attack(try_row, queen_column)):
+#    if (under_attack(queen_column, try_row)):
+    if (optimized_under_attack(queen_column, try_row)):
         return False
     else:
         return True
@@ -347,6 +376,11 @@ def initialize(size):
     global total_node_count
     global progress_count
     global solution_count
+    global slash_code
+    global backslash_code
+    global row_lookup
+    global slash_code_lookup
+    global backslash_code_lookup
     
     # Zero the Queen locations.
     for column in range(1, _MAX_COLUMNS+1):
@@ -365,6 +399,21 @@ def initialize(size):
     total_node_count = 0
     progress_count = 0
     solution_count = 0
+
+    # Set our helper matrices
+    # Allocate space.
+    slash_code = [[0 for i in range(0, number_of_rows+1)]
+                  for j in range(0, number_of_columns+1)]
+    backslash_code = [[0 for i in range(0, number_of_rows+1)]
+                      for j in range(0, number_of_columns+1)]
+    for r in range(1, number_of_rows+1):
+        for c in range(1, number_of_columns+1):
+            slash_code[r][c] = r - c + number_of_rows
+            backslash_code[r][c] = r + c - 1
+
+    slash_code_lookup = [False] * (number_of_columns + number_of_rows)
+    backslash_code_lookup = [False] * (number_of_columns + number_of_rows)
+    row_lookup = [False] * (number_of_rows+1)
 
 def run(args):
     """run the program with args already parsed."""
@@ -392,6 +441,7 @@ def run(args):
         show_node_count = False
         show_total_node_count = False
 
+    start_time = time.time()
     for size in range(start, start+number_of_problems):
         initialize(size)
         if (find_all_solutions):
@@ -415,6 +465,8 @@ def run(args):
         if (show_total_node_count):
             print("Searched {}".format(total_node_count), "total nodes.")
         print("----------------------------------------")
+    end_time = time.time()
+    print("Execution time in secs was {}".format(end_time-start_time))
 
 def main():
     """main code with command line parser"""
