@@ -1,5 +1,12 @@
 Changelog for nqueen.py.
 
+- Version 1.4
+Date: 4/2/2021
+* Converted entirely to using 0 indexing.  Note that this causes the
+show_progress output to have a -1 instead of 0 and in fact all the numbers
+are one less. The -1 makes the output look like it has two "-" if read
+incorrectly.
+
 - Version 1.3
 Date: 4/1/2021
 * Added timing.

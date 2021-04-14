@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.3"""
+"""The N-Queens problem. Version 1.4"""
 
 import argparse
 import sys
@@ -27,14 +27,14 @@ number_of_columns = 8
 # Actual number of rows on the chessboard.
 number_of_rows = 8
 # The row location of the Queen in a particular column.
-# 0 if there is no Queen in that column.
-# This 'array' is indexed starting at 1!
+# -1 if there is no Queen in that column.
+# This 'array' is indexed starting at 0!
 # It is actually a list in Python.
-queen_location = [0] * (_MAX_COLUMNS+1)
+queen_location = [-1] * (_MAX_COLUMNS)
 # The next row location to try putting the Queen.
-try_row = 1
+try_row = 0
 # The next column to try placing a Queen.
-queen_column = 1
+queen_column = 0
 # Count the number of nodes visited for one solution.
 node_count = 0
 # Count the total number of nodes visited.
@@ -47,13 +47,13 @@ solution_count = 0
 find_all_solutions = False
 
 # Optimization helper matrices
-slash_code = [[0 for i in range(0, number_of_rows+1)]
-              for j in range(0, number_of_columns+1)]
-backslash_code = [[0 for i in range(0, number_of_rows+1)]
-                  for j in range(0, number_of_columns+1)]
-row_lookup = [False] * (number_of_rows+1)
-slash_code_lookup = [False] * (number_of_columns + number_of_rows)
-backslash_code_lookup = [False] * (number_of_columns + number_of_rows)
+slash_code = [[0 for i in range(0, number_of_rows)]
+              for j in range(0, number_of_columns)]
+backslash_code = [[0 for i in range(0, number_of_rows)]
+                  for j in range(0, number_of_columns)]
+row_lookup = [False] * (number_of_rows)
+slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
 
 def show_advancing():
     """Show that we are advancing in finding a solution"""
@@ -113,8 +113,8 @@ def print_solution():
     if (show_count_only):
         return
 
-    for row in range(1, number_of_rows+1):
-        for column in range(1, number_of_columns+1):
+    for row in range(0, number_of_rows):
+        for column in range(0, number_of_columns):
             if (queen_location[column] == row):
                 print("Q", end='')
             else:
@@ -147,8 +147,8 @@ def under_attack(sc, sr):
        already placed in queen_location. Otherwise return False.
 
     """
-    for column in range(1, number_of_columns+1):
-        if (queen_location[column] != 0):
+    for column in range(0, number_of_columns):
+        if (queen_location[column] != -1):
             # We have a Queen placed in this column.
             if (queen_attacks_square(sc, sr, column, queen_location[column])):
                 # The Queen is attacking (sc, sr).
@@ -182,7 +182,7 @@ def retreat():
     # We have to go back to the previous column.
     queen_column -= 1
     show_retreating()
-    if (queen_column <= 0):
+    if (queen_column <= -1):
         # Cannot retreat.
         return False
     else:
@@ -193,7 +193,7 @@ def retreat():
         row_lookup[queen_row] = False
         slash_code_lookup[slash_code[queen_row][queen_column]] = False
         backslash_code_lookup[backslash_code[queen_row][queen_column]] = False
-        queen_location[queen_column] = 0
+        queen_location[queen_column] = -1
         return True
 
 def retreat_wrapper(success_flag):
@@ -243,11 +243,11 @@ def advance():
     row_lookup[try_row] = True
     slash_code_lookup[slash_code[try_row][queen_column]] = True
     backslash_code_lookup[backslash_code[try_row][queen_column]] = True
-    try_row = 1
+    try_row = 0
     queen_column += 1
     node_count += 1
     total_node_count += 1
-    if (queen_column > number_of_columns):
+    if (queen_column > number_of_columns - 1):
         return False
     else:
         return True
@@ -273,7 +273,7 @@ def seek_another_segment():
     global try_row
 
     seek_flag = False
-    while ((try_row <= number_of_rows) and (seek_flag == False)):
+    while ((try_row <= number_of_rows - 1) and (seek_flag == False)):
         if (admissible()):
             seek_flag = True
         else:
@@ -292,9 +292,9 @@ def search():
     success_flag = False;
 
     # First queen is not placed yet.
-    queen_column = 1
-    # Start at row 1.
-    try_row = 1;
+    queen_column = 0
+    # Start at row 0.
+    try_row = 0;
 
     more_to_search = True;
     while (more_to_search):
@@ -303,10 +303,10 @@ def search():
             # Store the info and see if we have a solution.
             # Note: After calling advance() we have
             #       queen_location[queen_column] = try_row
-            #       try_row = 1
+            #       try_row = 0
             #       queen_column += 1
             if (advance() == False):
-                # We found a solution. NB: queen_column = number_of_columns+1
+                # We found a solution. NB: queen_column = number_of_columns
                 show_found_solution()
                 print_solution()
                 success_flag = True
@@ -317,7 +317,7 @@ def search():
                 else:
                     more_to_search = False
             else:
-                # queen_column <= number_of_columns
+                # queen_column <= number_of_columns - 1
                 pass
         else:
             # We could not place the current Queen.
@@ -325,9 +325,9 @@ def search():
             # to try the next possibility.
             # Note: After calling retreat_wrapper() we have
             #       queen_column -= 1
-            #       As long as queen_column > 0 we have
+            #       As long as queen_column > -1 we have
             #       try_row = queen_location[queen_column] + 1
-            #       queen_location[queen_column] = 0
+            #       queen_location[queen_column] = -1
             more_to_search = retreat_wrapper(success_flag)
     return success_flag
 
@@ -382,14 +382,14 @@ def initialize(size):
     global slash_code_lookup
     global backslash_code_lookup
     
-    # Zero the Queen locations.
-    for column in range(1, _MAX_COLUMNS+1):
-        queen_location[column] = 0
+    # Empty the Queen locations.
+    for column in range(0, _MAX_COLUMNS):
+        queen_location[column] = -1
 	
     # The next row location to try putting the Queen.
-    try_row = 1
+    try_row = 0
     # The next column to try placing a Queen.
-    queen_column = 1
+    queen_column = 0
     # Set the size of the chessboard.
     number_of_columns = size
     number_of_rows = size
@@ -402,18 +402,21 @@ def initialize(size):
 
     # Set our helper matrices
     # Allocate space.
-    slash_code = [[0 for i in range(0, number_of_rows+1)]
-                  for j in range(0, number_of_columns+1)]
-    backslash_code = [[0 for i in range(0, number_of_rows+1)]
-                      for j in range(0, number_of_columns+1)]
-    for r in range(1, number_of_rows+1):
-        for c in range(1, number_of_columns+1):
-            slash_code[r][c] = r - c + number_of_rows
-            backslash_code[r][c] = r + c - 1
+    slash_code = [[0 for i in range(0, number_of_rows)]
+                  for j in range(0, number_of_columns)]
+    backslash_code = [[0 for i in range(0, number_of_rows)]
+                      for j in range(0, number_of_columns)]
+    for r in range(0, number_of_rows):
+        for c in range(0, number_of_columns):
+            slash_code[r][c] = r - c + number_of_columns - 1
+            backslash_code[r][c] = r + c
 
-    slash_code_lookup = [False] * (number_of_columns + number_of_rows)
-    backslash_code_lookup = [False] * (number_of_columns + number_of_rows)
-    row_lookup = [False] * (number_of_rows+1)
+    slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+    backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+    row_lookup = [False] * (number_of_rows)
+
+    #print("slash_code = {}".format(slash_code))
+    #print("backslash_code = {}".format(backslash_code))
 
 def run(args):
     """run the program with args already parsed."""
