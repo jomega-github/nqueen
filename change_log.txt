@@ -1,0 +1,7 @@
+Changelog for nqueen.py.
+
+- Version 1.0
+Date:3/28/2021
+*Initial version.  My idea was to take a C++ version I wrote for N-Queens
+some 20 years ago and convert it to Python. This version stuck as close
+as possible to the C++ version.
