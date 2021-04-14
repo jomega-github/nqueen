@@ -1,0 +1,37 @@
+3/28/2021
+The Eight Queens Problem.
+
+The problem is to place eight Queens on a chessboard so that no Queen
+attacks another Queen. The N-Queens version is on an N by N board with
+N Queens.
+
+Our solution uses a natural-order tree search.
+A description of the algorithm used can be found in the book
+"Computer Science. A First Course.", Second Edition, by
+Forsythe, Keenan, Organick, and Stenberg, 1975, John Wiley & Sons Inc.
+
+We now describe how the tree is defined.
+Note that if there is a solution then each Queen must be in a different
+column. So there are eight choices to be made, each choice picking the
+row that the Queen in each column will occupy. Specifically, the first
+choice is for the Queen in column one and gives rise to eight segments
+emanating from the root node of the tree. As one moves down the tree,
+the level represents the choices for the next column. Some of the
+choices are not admissible. It is also possible that no choice is
+possible at some level given previous choices on that path. A solution
+is represented by a path through the tree reaching to level eight.
+
+For data structures we use a simple linear array, which keeps track of
+the row placement for each Queen, and a few variables to keep track of
+the current column (the level in the tree) and the current row we are
+attempting (the current segment). All of these can be represented by
+ints; numbers 1-8 for the columns and rows; 0 to represent no choice
+yet made. The natural ordering of the integers provides an ordering
+for trying untried segments in the search. The simple linear array and
+few variables are all that is needed to do the backtracking.
+
+The admissibility test is currently handled by algorithmic testing;
+as opposed to using more data structures.
+
+All of this works equally well for other size chessboards.
+But currently the number of Queens is the number of columns.
