@@ -1,5 +1,18 @@
 Changelog for nqueen.py.
 
+- Version 1.2
+Date: 3/30/2021
+* Added new options.
+  --show_progress, --show_node_count, --show_total_node_count,
+  --show_count_only
+  The default is now to not show progress, not show count only,
+  not show node count and not show total node count.
+* Fixed repeating code by writing new function retreat_wrapper.
+* Fixed testing of number_of_problems and its message. This can be 1.
+* Fixed output "Looking for a ..." to be correct when looking for all.
+* Put separator after board printout so they do not run together if
+multiple solutions.
+
 - Version 1.1
 Date:3/30/2021
 * Added ability to count all solutions. -all option.
