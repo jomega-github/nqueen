@@ -14,7 +14,7 @@ See the file theory.txt for the original information on the algorithm I'm invest
 
 <h2>Version 2.4 Performance</h2>
 
-My version 2.4 on the 8-Queens problem finding all solutions searches 2,056 total nodes to find the 92 solutions. I count as a *node* every time the program places a Queen on the board.
+My version 2.4 on the 8-Queens problem, finding all solutions, searches 2,056 total nodes to find the 92 solutions. I count as a *node* every time the program places a Queen on the board.
 
 The Wikipedia page on the Eight_queens_puzzle, says that a backtracking depth-first search constructs the search tree by considering one row (column in my program) at a time, eliminating most nonsolution boards at a very early stage in their construction. Rejecting early even on incomplete boards, it says that only 15,720 possible Queen placements are examined. It says a further improvement, which examines only 5,508 possible Queen placements is to combine the permutation method with the early pruning method. The permutations are generated depth-first, and the search space is pruned if the partial permutation produces a diagonal attack. By permutation method it means "One algorithm solves the eight rooks puzzle by generating the permutations of the numbers 1 through 8 (of which there are 8! = 40,320), and uses the elements of each permutation as indices to place a Queen on each row. Then it rejects those boards with diagonal attacking positions."
 
