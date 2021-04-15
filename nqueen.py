@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 2.4"""
+"""The N-Queens problem. Version 2.5"""
 
 import argparse
 import sys
 import time
+# import random
 
 # Constants
 # The maximum number of columns on the chessboard.
@@ -19,8 +20,8 @@ _MAX_ROWS = 20
 
 # Do we show progress?
 show_progress = False
-# Do we only show the solution counts?
-show_count_only = False
+# Do we print the board solutions?
+no_print = False
 # Do we display node counts?
 show_node_count = False
 # Do we display total node counts?
@@ -143,7 +144,7 @@ def show_no_more_solutions():
 def print_solution():
     """Print a solution"""
 
-    if show_count_only:
+    if no_print:
         return
 
     for row in range(0, number_of_rows):
@@ -181,7 +182,6 @@ def retreat(success_flag):
        retreat() is complicated by handling different behavior needed
        because of adding the ability to find all solutions, and for
        performance.
-
     """
 
     global queen_column
@@ -236,7 +236,6 @@ def retreat(success_flag):
 def get_search_list_2():
     """Get the admissible rows by filtering several functions
        iteratively and short circuiting early if none free.
-
     """
 
     def row_check(sr):
@@ -273,7 +272,6 @@ def get_search_list_2():
 def get_search_list_1():
     """Get the admissible rows by filtering a function over the
        row_indices checking for freedom in all directions at once.
-
     """
 
     def free_row(sr):
@@ -292,13 +290,13 @@ def initialize_admissible_rows():
        admissible row into try_row and save the remainder in
        admissible_rows[queen_column]; return True. Otherwise, return
        False.
-
     """
     global try_row
     global admissible_rows
 
     # Get all the remaining admissible rows for queen_column; if any.
     search_list = get_search_list_1()
+    # random.shuffle(search_list)
 
     if search_list:
         # Set the next row location to try putting the Queen.
@@ -316,7 +314,6 @@ def initialize_admissible_rows():
 def store_and_check_for_solution():
     """Place the current Queen on the board. If this is a solution
        return True; otherwise return False
-
     """
     global queen_location
     global row_lookup
@@ -447,7 +444,7 @@ def check_num(s):
 
 
 def sanity_check_args(start, number_of_problems):
-    """Sanity check the users arguments."""
+    """Sanity check the user arguments."""
 
     if check_num(start):
         start = int(start)
@@ -479,24 +476,20 @@ def sanity_check_args(start, number_of_problems):
 def run(start=8, number_of_problems=1,
         fas=False,
         sp=False,
-        sco=False,
+        np=False,
         snc=False,
         stnc=False):
     global find_all_solutions
     global show_progress
-    global show_count_only
+    global no_print
     global show_node_count
     global show_total_node_count
 
     find_all_solutions = fas
     show_progress = sp
-    show_count_only = sco
+    no_print = np
     show_node_count = snc
     show_total_node_count = stnc
-
-    if sco:
-        show_node_count = False
-        show_total_node_count = False
 
     start_time = time.time()
     for size in range(start, start + number_of_problems):
@@ -533,7 +526,7 @@ def run_with_args(args):
     """Run the program with args already parsed"""
     global find_all_solutions
     global show_progress
-    global show_count_only
+    global no_print
     global show_node_count
     global show_total_node_count
 
@@ -544,19 +537,15 @@ def run_with_args(args):
         find_all_solutions = True
     if args.show_progress:
         show_progress = True
-    if args.show_count_only:
-        show_count_only = True
+    if args.no_print:
+        no_print = True
     if args.show_node_count:
         show_node_count = True
     if args.show_total_node_count:
         show_total_node_count = True
-    if args.show_count_only:
-        show_count_only = True
-        show_node_count = False
-        show_total_node_count = False
 
     run(start, number_of_problems, find_all_solutions,
-        show_progress, show_count_only, show_node_count,
+        show_progress, no_print, show_node_count,
         show_total_node_count)
 
 
@@ -568,15 +557,15 @@ def main():
     parser.add_argument('number_of_problems', type=int,
                         help='number of problems sizes to do')
     parser.add_argument('--all', action='store_true',
-                        help="print all solutions")
+                        help="find all solutions")
     parser.add_argument('--show_progress', action='store_true',
                         help="show progress")
     parser.add_argument('--show_node_count', action='store_true',
                         help="show node counts")
     parser.add_argument('--show_total_node_count', action='store_true',
                         help="show total node counts")
-    parser.add_argument('--show_count_only', action='store_true',
-                        help="show solution counts only")
+    parser.add_argument('--no_print', action='store_true',
+                        help="do not print boards")
     parser.set_defaults(func=run_with_args)
     args = parser.parse_args()
     args.func(args)
