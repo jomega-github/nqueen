@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.5"""
+"""The N-Queens problem. Version 1.6"""
 
 import argparse
 import sys
@@ -287,6 +287,13 @@ def search():
     global try_row
     global node_count
 
+    def free_row(sr):
+        #print("free_row: queen_column = {}".format(queen_column))
+        #print("free_row: sr = {}".format(sr))
+        return not (slash_code_lookup[slash_code[sr][queen_column]]
+                    or backslash_code_lookup[backslash_code[sr][queen_column]]
+                    or row_lookup[sr])
+
     # Return value.
     # True if we find a solution; False otherwise.
     success_flag = False;
@@ -298,8 +305,15 @@ def search():
 
     more_to_search = True;
     while (more_to_search):
-        if (seek_another_segment()):
-            # We found a place to put the Queen. (try_row, queen_column).
+        # Get all the remaining admissable rows for queen_column; if any.
+        search_list = list(filter(free_row,range(try_row,number_of_rows)))
+        #print("search_list = {}".format(search_list))
+        if search_list:
+            # search_list is not empty
+            # Get the first element from the search_list and remove it.
+            # try_row = search_list.pop(0)
+            try_row = search_list[0]
+            #print("try_row = {}".format(try_row))
             # Store the info and see if we have a solution.
             # Note: After calling advance() we have
             #       queen_location[queen_column] = try_row
@@ -320,6 +334,7 @@ def search():
                 # queen_column <= number_of_columns - 1
                 pass
         else:
+            # search_list is empty
             # We could not place the current Queen.
             # Try to back out the last Queen assigment and prepare
             # to try the next possibility.
@@ -329,7 +344,7 @@ def search():
             #       try_row = queen_location[queen_column] + 1
             #       queen_location[queen_column] = -1
             more_to_search = retreat_wrapper(success_flag)
-    return success_flag
+    return success_flag        
 
 def check_num(s):
     """check that a string is an integer"""
