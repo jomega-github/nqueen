@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 2.2"""
+"""The N-Queens problem. Version 2.3"""
 
 import argparse
 import sys
@@ -35,7 +35,7 @@ number_of_rows = 8
 # It is actually a list in Python.
 # Will be queen_location = [-1] * number_of_columns
 queen_location = []
-# The saved search list of admissible rows.
+# The saved search list of admissible rows for a column.
 # Will be admissible_rows = [[] for _ in range(number_of_columns)]
 # NB: admissible_rows = [] * (number_of_columns) does NOT work; it gives [].
 admissible_rows = []
@@ -56,20 +56,32 @@ solution_count = 0
 find_all_solutions = False
 
 # Optimization helper matrices
+# These look upside down because in chess the rows are numbered from
+# the White side up, while in Python (and Math matrices) the numbering
+# of rows is top down!
+# slash_code assigns to each square on the board a diagonal number.
+# These are positive slope diagonals. "/" oriented; hence the name.
 # Will be...
 # slash_code = [[0 for _ in range(0, number_of_columns)]
 #                for _ in range(0, number_of_rows)]
+# backslash_code assigns to each square on the board a diagonal number.
+# These are negative slope diagonals. (anti-diagonals in chess programming)
+# "\" oriented; hence the name.
 # backslash_code = [[0 for _ in range(0, number_of_columns)]
 #                    for _ in range(0, number_of_rows)]
 slash_code = []
 backslash_code = []
+# row_lookup records if a row is occupied by some Queen.
 # Will be...
 # row_lookup = [False] * (number_of_rows)
+# slash_code_lookup records if a positive diagonal is occupied by some Queen.
 # slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+# backslash_code_lookup records is a negative diagonal is occupied.
 # backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
 row_lookup = []
 slash_code_lookup = []
 backslash_code_lookup = []
+# row_indices caches the entire list of row numbers for efficiency.
 # Will be row_indices = list(range(0,number_of_rows))
 row_indices = []
 
@@ -141,13 +153,33 @@ def print_solution():
     print("---------------------")
 
 
-def retreat():
-    """Prepare to try the next location for the previously placed Queen.
-       If we cannot retreat, then return False. Otherwise we
-       return True and queen_column is the new column to try; starting
-       at row try_row.
+def retreat(success_flag):
+    """retreat() backs up the search tree looking for a "previous column"
+       with rows that have not been tried. This previous column might be
+       the last column on the board if a solution was just found!
+
+       If retreat() ever finds that it cannot back up any further then it
+       notifies of either no solution, or no more solutions if one had
+       already been found so indicated by success_flag, and returns False.
+
+       Otherwise as long as retreat() is searching it first removes the Queen
+       and associated attacking information for further tries.
+
+       If a new column and row to try are found then queen_column contains
+       the column number, try_row the row to try and True is returned. In
+       that case, admissible_rows[] for that column is also
+       updated.
+
+       show_retreating() is called for every queen_column decrement.
+
+       Note: success_flag is passed in True if we've found some solution
+       already; otherwise it is False.
+
+       Complicated by handling different behavior need because of adding
+       the ability to find all solutions and for performance.
 
     """
+
     global queen_column
     global try_row
     global admissible_rows
@@ -156,10 +188,19 @@ def retreat():
     global backslash_code_lookup
     global queen_location
 
-    # We have to go back to the previous column.
+    # We have to go back to the "previous column"; which may be the final
+    # column on the board.
     queen_column -= 1
     show_retreating()
-    if queen_column > -1:
+    while queen_column > -1:
+        # Can retreat.
+        # Remove the Queen from the board.
+        queen_row = queen_location[queen_column]
+        row_lookup[queen_row] = False
+        slash_code_lookup[slash_code[queen_row][queen_column]] = False
+        backslash_code_lookup[backslash_code[queen_row][queen_column]] = False
+        queen_location[queen_column] = -1
+
         # Try the next admissible row after the one we tried last.
         search_list = admissible_rows[queen_column]
         if search_list:
@@ -168,50 +209,24 @@ def retreat():
             # admissible_rows[queen_column] since search_list is a
             # reference!
             try_row = search_list.pop(0)
+            return True
         else:
-            # Stop the searching.
-            try_row = number_of_rows
-        # Remove the Queen from the board.
-        queen_row = queen_location[queen_column]
-        row_lookup[queen_row] = False
-        slash_code_lookup[slash_code[queen_row][queen_column]] = False
-        backslash_code_lookup[backslash_code[queen_row][queen_column]] = False
-        queen_location[queen_column] = -1
-        return True
-    else:
-        # Cannot retreat.
-        return False
+            queen_column -= 1            
+            show_retreating()
 
-
-def retreat_wrapper(success_flag):
-    """A wrapper to handle the different behavior need because of adding the
-       ability to find all solutions.
-       If success_flag is True then we've found some solution already;
-       otherwise we have not.
-       The return value is True if the search for solutions should continue
-       and False otherwise.
-       If we cannot retreat, then return False. Otherwise we
-       return True and queen_column is the new column to try; starting
-       at row try_row.
-
-    """
-
-    more_to_search = True
-    if not retreat():
-        more_to_search = False
-        if find_all_solutions:
-            if success_flag:
-                # We already found a solution.
-                show_no_more_solutions()
-            else:
-                # No solution.
-                show_no_solution()
+    # Cannot retreat.
+    if find_all_solutions:
+        if success_flag:
+            # We already found a solution.
+            show_no_more_solutions()
         else:
             # No solution.
             show_no_solution()
     else:
-        pass
-    return more_to_search
+        # No solution.
+        show_no_solution()
+
+    return False
 
 
 def get_search_list_2():
@@ -351,7 +366,7 @@ def search():
                 solution_count += 1
                 node_count = 0
                 if find_all_solutions:
-                    more_to_search = retreat_wrapper(success_flag)
+                    more_to_search = retreat(success_flag)
                 else:
                     more_to_search = False
         else:
@@ -363,7 +378,7 @@ def search():
             #       As long as queen_column > -1 we have
             #       try_row = next row to try or number_of_rows
             #       queen_location[queen_column] = -1
-            more_to_search = retreat_wrapper(success_flag)
+            more_to_search = retreat(success_flag)
     return success_flag        
 
 
