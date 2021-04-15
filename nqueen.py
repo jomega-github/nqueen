@@ -1,11 +1,12 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.9"""
+"""The N-Queens problem. Version 1.10"""
 
 import argparse
 import sys
 import time
 import logging
+import numpy as np
 
 logging.basicConfig(
     format='%(levelname)s:%(funcName)s:%(lineno)d:%(message)s',
@@ -38,10 +39,8 @@ number_of_columns = 8
 number_of_rows = 8
 # The row location of the Queen in a particular column.
 # -1 if there is no Queen in that column.
-# This 'array' is indexed starting at 0!
-# It is actually a list in Python.
-# Will be queen_location = [-1] * number_of_columns
-queen_location = []
+# Will be queen_location = np.full(number_of_columns, -1, dtype=np.intc)
+queen_location = np.full(1, -1, dtype=np.intc)
 # The saved search list of admissable rows.
 # Will be admissible_rows = [[] for _ in range(number_of_columns)]
 # NB: admissible_rows = [] * (number_of_columns) does NOT work; it gives [].
@@ -62,20 +61,23 @@ solution_count = 0
 find_all_solutions = False
 
 # Optimization helper matrices
+# Will be slash_code =
+#     np.full((number_of_rows, number_of_columns), 0, dtype=np.uintc)
+# Will be backslash_code =
+#     np.full((number_of_rows, number_of_columns), 0, dtype=np.uintc)
+slash_code = np.full((1,1), 0, dtype=np.uintc)
+backslash_code = np.full((1,1), 0, dtype=np.uintc)
 # Will be...
-# slash_code = [[0 for j in range(0, number_of_columns)]
-#                for i in range(0, number_of_rows)]
-# backslash_code = [[0 for j in range(0, number_of_columns)]
-#                    for j in range(0, number_of_rows)]
-slash_code = []
-backslash_code = []
-# Will be...
-# row_lookup = [False] * (number_of_rows)
-# slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
-# backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
-row_lookup = []
-slash_code_lookup = []
-backslash_code_lookup = []
+# row_lookup = np.full(number_of_rows, False, dtype=np.bool_)
+# slash_code_lookup = np.full((number_of_columns + number_of_rows - 1),
+#                              False, dtype=np.bool_)
+# backslash_code_lookup = np.full((number_of_columns + number_of_rows - 1),
+#                                  False, dtype=np.bool_)
+row_lookup = np.full(1, False, dtype=np.bool_)
+slash_code_lookup = np.full(1, False, dtype=np.bool_)
+backslash_code_lookup = np.full(1, False, dtype=np.bool_)
+# Will be row_indices = list(range(0,number_of_rows))
+row_indices = []
 
 def show_advancing():
     """Show that we are advancing in finding a solution"""
@@ -184,8 +186,8 @@ def retreat():
         # Remove the Queen from the board.
         queen_row = queen_location[queen_column]
         row_lookup[queen_row] = False
-        slash_code_lookup[slash_code[queen_row][queen_column]] = False
-        backslash_code_lookup[backslash_code[queen_row][queen_column]] = False
+        slash_code_lookup[slash_code[queen_row,queen_column]] = False
+        backslash_code_lookup[backslash_code[queen_row,queen_column]] = False
         queen_location[queen_column] = -1
         if __debug__:
             logging.debug("Remove the queen from column %s", queen_column)
@@ -239,12 +241,12 @@ def initialize_admissible_rows():
     global admissible_rows
 
     def free_row(sr):
-        return not (slash_code_lookup[slash_code[sr][queen_column]]
-                    or backslash_code_lookup[backslash_code[sr][queen_column]]
+        return not (slash_code_lookup[slash_code[sr,queen_column]]
+                    or backslash_code_lookup[backslash_code[sr,queen_column]]
                     or row_lookup[sr])
 
     # Get all the remaining admissible rows for queen_column; if any.
-    search_list = list(filter(free_row,range(0,number_of_rows)))
+    search_list = list(filter(free_row, row_indices))
     if __debug__:
         logging.debug("search_list = %s", search_list)
 
@@ -281,8 +283,8 @@ def advance():
     show_advancing()
     queen_location[queen_column] = try_row
     row_lookup[try_row] = True
-    slash_code_lookup[slash_code[try_row][queen_column]] = True
-    backslash_code_lookup[backslash_code[try_row][queen_column]] = True
+    slash_code_lookup[slash_code[try_row,queen_column]] = True
+    backslash_code_lookup[backslash_code[try_row,queen_column]] = True
     queen_column += 1
     node_count += 1
     total_node_count += 1
@@ -369,6 +371,7 @@ def initialize(size):
     global backslash_code
     global slash_code_lookup
     global backslash_code_lookup
+    global row_indices
     global row_lookup
     global try_row
     
@@ -383,7 +386,7 @@ def initialize(size):
         logging.debug("number_of_columns = %s", number_of_columns)
 
     # Empty the Queen locations.
-    queen_location = [-1] * number_of_columns
+    queen_location = np.full(number_of_columns, -1, dtype=np.intc)
     if __debug__:
         logging.debug("queen_location = %s", queen_location)
 	
@@ -409,25 +412,29 @@ def initialize(size):
         logging.debug("solution_count = %s", solution_count)
 
     # Set our helper matrices for optimization.
-    slash_code = [[0 for j in range(0, number_of_columns)]
-                  for i in range(0, number_of_rows)]
-    backslash_code = [[0 for j in range(0, number_of_columns)]
-                      for i in range(0, number_of_rows)]
+    slash_code = np.full((number_of_rows, number_of_columns),
+                         0, dtype=np.uintc)
+    backslash_code = np.full((number_of_rows, number_of_columns),
+                             0, dtype=np.uintc)
     for r in range(0, number_of_rows):
         for c in range(0, number_of_columns):
-            slash_code[r][c] = r + c
-            backslash_code[r][c] = r - c + number_of_columns - 1
+            slash_code[r,c] = r + c
+            backslash_code[r,c] = r - c + number_of_columns - 1
     if __debug__:
         logging.debug("slash_code = %s", slash_code)
         logging.debug("backslash_code = %s", backslash_code)
 
-    slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
-    backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
-    row_lookup = [False] * (number_of_rows)
+    slash_code_lookup = np.full((number_of_columns + number_of_rows - 1),
+                                False, dtype=np.bool_)
+    backslash_code_lookup = np.full((number_of_columns + number_of_rows - 1),
+                                    False, dtype=np.bool_)
+    row_lookup = np.full(number_of_rows, False, dtype=np.bool_)
     if __debug__:
         logging.debug("slash_code_lookup = %s", slash_code_lookup)
         logging.debug("backslash_code_lookup = %s", backslash_code_lookup)
         logging.debug("row_lookup = %s", row_lookup)
+
+    row_indices = list(range(0,number_of_rows))
 
     # Initialize admissible_rows and try_row.
     initialize_admissible_rows()

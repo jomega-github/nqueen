@@ -1,5 +1,10 @@
 Change log for nqueen.py.
 
+- Version 1.10
+Date: 4/4/2021
+* An experiment with numpy. No improvement in speed.
+  I could not figure out how to benefit from vectorization and broadcasting.
+
 - Version 1.9
 Date: 4/4/2021
 * Removed globals from inside the show functions.
