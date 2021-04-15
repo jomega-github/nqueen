@@ -1,5 +1,17 @@
 Change log for nqueen.py.
 
+- Version 2.2
+Date: 4/6/2021
+* Removed all debug and logging!
+* Reset of node_count to 0 in repeat_wrapper was removed as unnecessary.
+* Update of list of lists unnecessary, so removed.
+* The admissible_rows did not need to be saved when not continuing
+when no more rows to try in initialize_admissible_rows(), so relocated.
+* Some statements moved for readability.
+* The args to run() were shadowing the globals. So renamed and made
+very short. run() only gets called by hand if profiling the code.
+* Output statements made better English.
+
 - Version 2.1
 Date: 4/6/2021
 * Fixed a number of PEP8 and typo problems.
