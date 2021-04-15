@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.6"""
+"""The N-Queens problem. Version 1.7"""
 
 import argparse
 import sys
@@ -12,6 +12,16 @@ _MAX_COLUMNS = 20;
 # The maximum number of rows on the chessboard.
 _MAX_ROWS = 20;
 # FYI: There are 39,029,188,884 solutions for 20x20 !
+
+#TODO: Regularize whether space is allocated for the largest case needed
+# here, or whether done in initialize(). And then whether the previously
+# used space is deleted.
+
+#TODO: What is the effect on performance of using global variables?
+
+#TODO: How should one do debug/info print statements? The issue is that
+# they will be executed and hence hurt performance even if printing is
+# turned off. i.e.  no macros.
 
 # Globals
 # Do we show progress?
@@ -31,6 +41,9 @@ number_of_rows = 8
 # This 'array' is indexed starting at 0!
 # It is actually a list in Python.
 queen_location = [-1] * (_MAX_COLUMNS)
+# The saved search list of admissable rows.
+# NB: admissible_rows = [] * (_MAX_COLUMNS) does NOT work; it gives [].
+admissible_rows = [ [] for _ in range(_MAX_COLUMNS) ]
 # The next row location to try putting the Queen.
 try_row = 0
 # The next column to try placing a Queen.
@@ -80,14 +93,15 @@ def show_retreating():
             progress_count = 0
 
 def show_found_solution():
-    """show that we have found a solution"""
-    global node_count
+    """Show that we have found a solution"""
     global solution_count
+    global node_count
 
     if (show_progress):
         print("!")
     if (show_node_count):
         print("Searched {}".format(node_count), "nodes.")
+#TODO: This setting of variables in a "show" function seems wrong to me.
     solution_count += 1
     node_count = 0
 
@@ -106,10 +120,11 @@ def show_no_more_solutions():
         print("#")
     if (show_node_count):
         print("Searched {}".format(node_count), "nodes.")
+#TODO: This setting of variables in a "show" function seems wrong to me.
     node_count = 0
 
 def print_solution():
-    """print a solution"""
+    """Print a solution"""
     if (show_count_only):
         return
 
@@ -122,52 +137,6 @@ def print_solution():
         print()
     print("---------------------")
 
-def queen_attacks_square(sc, sr, queen_c, queen_r):
-    """Return True if the square (sc, sr) is attacked by the Queen on
-       square (queen_c, queen_r). Otherwise return False.
-       We consider the square the Queen is on to be attacked.
-
-    """
-    if (sc == queen_c):
-        return True
-
-    if (sr == queen_r):
-        return True;
-
-    if ((sr - queen_r) == (sc - queen_c)):
-        return True;
-
-    if ((sr - queen_r) == (queen_c - sc)):
-        return True;
-	
-    return False;
-
-def under_attack(sc, sr):
-    """Return True if the square (sc, sr) is under attack by the Queens
-       already placed in queen_location. Otherwise return False.
-
-    """
-    for column in range(0, number_of_columns):
-        if (queen_location[column] != -1):
-            # We have a Queen placed in this column.
-            if (queen_attacks_square(sc, sr, column, queen_location[column])):
-                # The Queen is attacking (sc, sr).
-                return True
-    # No Queen is attacking (sc, sr).
-    return False
-
-def optimized_under_attack(sc, sr):
-    """Return True if the square (sc, sr) is under attack by the Queens
-       already placed in queen_location. Otherwise return False.
-
-    """
-
-    if (slash_code_lookup[slash_code[sr][sc]]
-        or backslash_code_lookup[backslash_code[sr][sc]]
-        or row_lookup[sr]):
-        return True
-    return False
-
 def retreat():
     """Prepare to try the next location for the previously placed Queen.
        If we cannot retreat, then return False. Otherwise we
@@ -175,9 +144,13 @@ def retreat():
        at row try_row.
 
     """
-    global queen_location
-    global try_row
     global queen_column
+    global try_row
+    global admissible_rows
+    global row_lookup
+    global slash_code_lookup
+    global backslash_code_lookup
+    global queen_location
 
     # We have to go back to the previous column.
     queen_column -= 1
@@ -186,10 +159,17 @@ def retreat():
         # Cannot retreat.
         return False
     else:
-        # Try the row after the one we tried last.
-        queen_row = queen_location[queen_column]
-        try_row = queen_row + 1
+        # Try the next addmissible row after the one we tried last.
+        search_list = admissible_rows[queen_column]
+        if search_list:
+            # More to try.
+            try_row = search_list.pop(0)
+            admissible_rows[queen_column] = search_list
+        else:
+            # Stop the searching.
+            try_row = number_of_rows
         # Remove the Queen from the board.
+        queen_row = queen_location[queen_column]
         row_lookup[queen_row] = False
         slash_code_lookup[slash_code[queen_row][queen_column]] = False
         backslash_code_lookup[backslash_code[queen_row][queen_column]] = False
@@ -226,6 +206,42 @@ def retreat_wrapper(success_flag):
         pass
     return more_to_search
 
+def initialize_admissible_rows():
+    """For the current number_of_rows and queen_column, finds all the
+       admissible rows. Then if there are any such rows, pop the first
+       admissible row into try_row and save the remainder in
+       admissible_rows[queen_column]. Otherwise, set try_row to
+       number_of_rows to indicate no more rows to try.
+
+    """
+
+    global try_row
+    global admissible_rows
+
+    def free_row(sr):
+        #print("free_row: number_of_rows = {}".format(number_of_rows))
+        #print("free_row: queen_column = {}".format(queen_column))
+        #print("free_row: sr = {}".format(sr))
+        return not (slash_code_lookup[slash_code[sr][queen_column]]
+                    or backslash_code_lookup[backslash_code[sr][queen_column]]
+                    or row_lookup[sr])
+
+    #print("initialize_ad: number_of_rows = {}".format(number_of_rows))
+    #print("initialize_ad: queen_column = {}".format(queen_column))
+    # Get all the remaining admissible rows for queen_column; if any.
+    search_list = list(filter(free_row,range(0,number_of_rows)))
+    #print("initialize_ad: search_list = {}".format(search_list))
+    if search_list:
+        # Set the next row location to try putting the Queen.
+        try_row = search_list.pop(0)
+    else:
+        # Stop the searching.
+        try_row = number_of_rows
+    #print("initialize_ad: try_row = {}".format(try_row))
+    #print("initialize_ad: search_list = {}".format(search_list))
+    # Save the remaining admissible rows if any.
+    admissible_rows[queen_column] = search_list
+
 def advance():
     """Place the current Queen on the board and prepare to
        try the next column. Return False if all the Queens are
@@ -233,7 +249,9 @@ def advance():
 
     """
     global queen_location
-    global try_row
+    global row_lookup
+    global slash_code_lookup
+    global backslash_code_lookup
     global queen_column
     global node_count
     global total_node_count
@@ -243,90 +261,37 @@ def advance():
     row_lookup[try_row] = True
     slash_code_lookup[slash_code[try_row][queen_column]] = True
     backslash_code_lookup[backslash_code[try_row][queen_column]] = True
-    try_row = 0
     queen_column += 1
     node_count += 1
     total_node_count += 1
     if (queen_column > number_of_columns - 1):
         return False
     else:
+        initialize_admissible_rows()
         return True
-
-def admissible():
-    """Return True if (try_row, queen_column) is an admissible location
-       for the current Queen. Otherwise return False.
-
-    """
-
-#    if (under_attack(queen_column, try_row)):
-    if (optimized_under_attack(queen_column, try_row)):
-        return False
-    else:
-        return True
-
-def seek_another_segment():
-    """Return True if we can find a place to put the current Queen.
-       In that case (try_row, queen_column) is the place to put her.
-       Otherwise return False.
-
-    """
-    global try_row
-
-    seek_flag = False
-    while ((try_row <= number_of_rows - 1) and (seek_flag == False)):
-        if (admissible()):
-            seek_flag = True
-        else:
-            try_row += 1
-    return seek_flag
 
 def search():
-    """search for a solution and return True if found else False"""
-    global queen_location
-    global queen_column
-    global try_row
-    global node_count
-
-    def free_row(sr):
-        #print("free_row: queen_column = {}".format(queen_column))
-        #print("free_row: sr = {}".format(sr))
-        return not (slash_code_lookup[slash_code[sr][queen_column]]
-                    or backslash_code_lookup[backslash_code[sr][queen_column]]
-                    or row_lookup[sr])
+    """Search for a solution and return True if found else False"""
 
     # Return value.
     # True if we find a solution; False otherwise.
     success_flag = False;
 
-    # First queen is not placed yet.
-    queen_column = 0
-    # Start at row 0.
-    try_row = 0;
-
     more_to_search = True;
     while (more_to_search):
-        # Get all the remaining admissable rows for queen_column; if any.
-        search_list = list(filter(free_row,range(try_row,number_of_rows)))
-        #print("search_list = {}".format(search_list))
-        if search_list:
-            # search_list is not empty
-            # Get the first element from the search_list and remove it.
-            # try_row = search_list.pop(0)
-            try_row = search_list[0]
-            #print("try_row = {}".format(try_row))
+        #print("try_row = {}".format(try_row))
+        if (try_row <= number_of_rows - 1):
             # Store the info and see if we have a solution.
             # Note: After calling advance() we have
             #       queen_location[queen_column] = try_row
-            #       try_row = 0
             #       queen_column += 1
+            #       try_row = next row to try or number_of_rows
             if (advance() == False):
                 # We found a solution. NB: queen_column = number_of_columns
                 show_found_solution()
                 print_solution()
                 success_flag = True
                 if (find_all_solutions):
-                    # A way to break into the debugger.
-                    # import pdb; pdb.set_trace()
                     more_to_search = retreat_wrapper(success_flag)
                 else:
                     more_to_search = False
@@ -334,14 +299,14 @@ def search():
                 # queen_column <= number_of_columns - 1
                 pass
         else:
-            # search_list is empty
+            #print("try_row too big, so no more in this column")
             # We could not place the current Queen.
             # Try to back out the last Queen assigment and prepare
             # to try the next possibility.
             # Note: After calling retreat_wrapper() we have
             #       queen_column -= 1
             #       As long as queen_column > -1 we have
-            #       try_row = queen_location[queen_column] + 1
+            #       try_row = next row to try or number_of_rows
             #       queen_location[queen_column] = -1
             more_to_search = retreat_wrapper(success_flag)
     return success_flag        
@@ -382,33 +347,44 @@ def sanity_check_args(start, number_of_problems):
         sys.exit(1)
 
 def initialize(size):
-    global queen_location
-    global try_row
-    global queen_column
+    """Initialize for the next problem of a given size."""
+
     global number_of_columns
     global number_of_rows
+    global queen_location
+    global admissible_rows
+    global queen_column
     global node_count
     global total_node_count
     global progress_count
     global solution_count
     global slash_code
     global backslash_code
-    global row_lookup
     global slash_code_lookup
     global backslash_code_lookup
+    global row_lookup
+    global try_row
     
-    # Empty the Queen locations.
-    for column in range(0, _MAX_COLUMNS):
-        queen_location[column] = -1
-	
-    # The next row location to try putting the Queen.
-    try_row = 0
-    # The next column to try placing a Queen.
-    queen_column = 0
     # Set the size of the chessboard.
     number_of_columns = size
     number_of_rows = size
+    #print("initialize: number_of_rows = {}".format(number_of_rows))
+
+    # Empty the Queen locations.
+    #TODO: Use comprehension instead of loop
+    for column in range(0, number_of_columns):
+        queen_location[column] = -1
+    #print("initialize: queen_location = {}".format(queen_location))
 	
+    # Empty the admissable rows.
+    #TODO: Use comprehension instead of loop
+    for column in range(0, number_of_columns):
+        admissible_rows[column] = []
+    #print("initialize: admissible_rows = {}".format(admissible_rows))
+
+    # The next column to try placing a Queen.
+    queen_column = 0
+
     # Set our counters and such.
     node_count = 0
     total_node_count = 0
@@ -432,6 +408,9 @@ def initialize(size):
 
     #print("slash_code = {}".format(slash_code))
     #print("backslash_code = {}".format(backslash_code))
+
+    # Initialize admissible_rows and try_row.
+    initialize_admissible_rows()
 
 def run(args):
     """run the program with args already parsed."""

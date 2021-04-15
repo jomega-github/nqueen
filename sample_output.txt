@@ -18844,4 +18844,4 @@ All solutions found.
 Total solutions found 724
 Searched 35538 total nodes.
 ----------------------------------------
-Execution time in secs was 2.6167635917663574
+Execution time in secs was 1.9740378856658936
