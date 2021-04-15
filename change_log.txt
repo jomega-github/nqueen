@@ -1,5 +1,11 @@
 Change log for nqueen.py.
 
+- Version 1.9
+Date: 4/4/2021
+* Removed globals from inside the show functions.
+* Stopped allocating space at the top for structures because they are
+allocated in initialize().
+
 - Version 1.8
 Date: 4/4/2021
 * Same as 1.7 but now with debug statements added that can be disabled from

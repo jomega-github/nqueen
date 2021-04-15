@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.8"""
+"""The N-Queens problem. Version 1.9"""
 
 import argparse
 import sys
@@ -21,6 +21,9 @@ _MAX_ROWS = 20;
 # FYI: There are 39,029,188,884 solutions for 20x20 !
 
 # Globals
+# NB: Everything is initialized in initialize(), so these
+#     are sometimes just set to empty values and defaults.
+
 # Do we show progress?
 show_progress = False
 # Do we only show the solution counts?
@@ -37,10 +40,12 @@ number_of_rows = 8
 # -1 if there is no Queen in that column.
 # This 'array' is indexed starting at 0!
 # It is actually a list in Python.
-queen_location = [-1] * (_MAX_COLUMNS)
+# Will be queen_location = [-1] * number_of_columns
+queen_location = []
 # The saved search list of admissable rows.
-# NB: admissible_rows = [] * (_MAX_COLUMNS) does NOT work; it gives [].
-admissible_rows = [[] for _ in range(_MAX_COLUMNS)]
+# Will be admissible_rows = [[] for _ in range(number_of_columns)]
+# NB: admissible_rows = [] * (number_of_columns) does NOT work; it gives [].
+admissible_rows = []
 # The next row location to try putting the Queen.
 try_row = 0
 # The next column to try placing a Queen.
@@ -57,13 +62,20 @@ solution_count = 0
 find_all_solutions = False
 
 # Optimization helper matrices
-slash_code = [[0 for j in range(0, number_of_columns)]
-              for i in range(0, number_of_rows)]
-backslash_code = [[0 for j in range(0, number_of_columns)]
-                  for j in range(0, number_of_rows)]
-row_lookup = [False] * (number_of_rows)
-slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
-backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+# Will be...
+# slash_code = [[0 for j in range(0, number_of_columns)]
+#                for i in range(0, number_of_rows)]
+# backslash_code = [[0 for j in range(0, number_of_columns)]
+#                    for j in range(0, number_of_rows)]
+slash_code = []
+backslash_code = []
+# Will be...
+# row_lookup = [False] * (number_of_rows)
+# slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+# backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+row_lookup = []
+slash_code_lookup = []
+backslash_code_lookup = []
 
 def show_advancing():
     """Show that we are advancing in finding a solution"""
@@ -91,16 +103,11 @@ def show_retreating():
 
 def show_found_solution():
     """Show that we have found a solution"""
-    global solution_count
-    global node_count
 
     if (show_progress):
         print("!")
     if (show_node_count):
         print("Searched {}".format(node_count), "nodes.")
-#TODO: This setting of variables in a "show" function seems wrong to me.
-    solution_count += 1
-    node_count = 0
 
 def show_no_solution():
     """Show that we did not find a solution"""
@@ -111,14 +118,11 @@ def show_no_solution():
 
 def show_no_more_solutions():
     """Show that we did not find more solutions"""
-    global node_count
 
     if (show_progress):
         print("#")
     if (show_node_count):
         print("Searched {}".format(node_count), "nodes.")
-#TODO: This setting of variables in a "show" function seems wrong to me.
-    node_count = 0
 
 def print_solution():
     """Print a solution"""
@@ -203,6 +207,7 @@ def retreat_wrapper(success_flag):
        at row try_row.
 
     """
+    global node_count
 
     more_to_search = True;
     if (retreat() == False):
@@ -211,6 +216,7 @@ def retreat_wrapper(success_flag):
             if (success_flag):
                 # We already found a solution.
                 show_no_more_solutions()
+                node_count = 0
             else:
                 # No solution.
                 show_no_solution()
@@ -229,7 +235,6 @@ def initialize_admissible_rows():
        number_of_rows to indicate no more rows to try.
 
     """
-
     global try_row
     global admissible_rows
 
@@ -298,6 +303,8 @@ def advance():
 
 def search():
     """Search for a solution and return True if found else False"""
+    global solution_count
+    global node_count
 
     # Return value.
     # True if we find a solution; False otherwise.
@@ -320,6 +327,8 @@ def search():
                 if __debug__:
                     logging.debug("Found a solution.")
                 show_found_solution()
+                solution_count += 1
+                node_count = 0
                 print_solution()
                 success_flag = True
                 if (find_all_solutions):
@@ -346,8 +355,7 @@ def search():
     return success_flag        
 
 def initialize(size):
-    """Initialize for the next problem of a given size."""
-
+    """Initialize for the next problem of a given size"""
     global number_of_columns
     global number_of_rows
     global queen_location
@@ -463,7 +471,7 @@ def sanity_check_args(start, number_of_problems):
         sys.exit(1)
 
 def run(args):
-    """run the program with args already parsed."""
+    """Run the program with args already parsed"""
     global find_all_solutions
     global show_progress
     global show_count_only
@@ -527,7 +535,7 @@ def run(args):
     print("Execution time in secs was {}".format(end_time-start_time))
 
 def main():
-    """main code with command line parser"""
+    """Main code with command line parser"""
     parser = argparse.ArgumentParser(description="Solve N-queen problems")
     parser.add_argument('start', type=int,
                         help='miniumn board starting size')
