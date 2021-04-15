@@ -1,7 +1,13 @@
-Changelog for nqueen.py.
+Change log for nqueen.py.
+
+- Version 1.8
+Date: 4/4/2021
+* Same as 1.7 but now with debug statements added that can be disabled from
+compilation into byte code by running "python -O ...". With that option the
+timings are the same as version 1.7.
 
 - Version 1.7
-Date: 4/7/2021
+Date: 4/3/2021
 * Implemented the admissible row idea.
 
 - Version 1.6
