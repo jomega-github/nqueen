@@ -1,5 +1,12 @@
 Change log for nqueen.py.
 
+- Version 2.0
+Date: 4/5/2021
+* I took the range out of the filter in initialize_admissible_rows()
+and that gave back just 0.4 secs; as in version 1.10.
+* I broke out the code in that function that gets the search_list
+so I could try various algorithms for that. No real improvement.
+
 - Version 1.10
 Date: 4/4/2021
 * An experiment with numpy. No improvement in speed.

@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.10"""
+"""The N-Queens problem. Version 2.0"""
 
 import argparse
 import sys
 import time
 import logging
-import numpy as np
 
 logging.basicConfig(
     format='%(levelname)s:%(funcName)s:%(lineno)d:%(message)s',
@@ -39,8 +38,10 @@ number_of_columns = 8
 number_of_rows = 8
 # The row location of the Queen in a particular column.
 # -1 if there is no Queen in that column.
-# Will be queen_location = np.full(number_of_columns, -1, dtype=np.intc)
-queen_location = np.full(1, -1, dtype=np.intc)
+# This 'array' is indexed starting at 0!
+# It is actually a list in Python.
+# Will be queen_location = [-1] * number_of_columns
+queen_location = []
 # The saved search list of admissable rows.
 # Will be admissible_rows = [[] for _ in range(number_of_columns)]
 # NB: admissible_rows = [] * (number_of_columns) does NOT work; it gives [].
@@ -61,21 +62,20 @@ solution_count = 0
 find_all_solutions = False
 
 # Optimization helper matrices
-# Will be slash_code =
-#     np.full((number_of_rows, number_of_columns), 0, dtype=np.uintc)
-# Will be backslash_code =
-#     np.full((number_of_rows, number_of_columns), 0, dtype=np.uintc)
-slash_code = np.full((1,1), 0, dtype=np.uintc)
-backslash_code = np.full((1,1), 0, dtype=np.uintc)
 # Will be...
-# row_lookup = np.full(number_of_rows, False, dtype=np.bool_)
-# slash_code_lookup = np.full((number_of_columns + number_of_rows - 1),
-#                              False, dtype=np.bool_)
-# backslash_code_lookup = np.full((number_of_columns + number_of_rows - 1),
-#                                  False, dtype=np.bool_)
-row_lookup = np.full(1, False, dtype=np.bool_)
-slash_code_lookup = np.full(1, False, dtype=np.bool_)
-backslash_code_lookup = np.full(1, False, dtype=np.bool_)
+# slash_code = [[0 for j in range(0, number_of_columns)]
+#                for i in range(0, number_of_rows)]
+# backslash_code = [[0 for j in range(0, number_of_columns)]
+#                    for j in range(0, number_of_rows)]
+slash_code = []
+backslash_code = []
+# Will be...
+# row_lookup = [False] * (number_of_rows)
+# slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+# backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+row_lookup = []
+slash_code_lookup = []
+backslash_code_lookup = []
 # Will be row_indices = list(range(0,number_of_rows))
 row_indices = []
 
@@ -160,12 +160,7 @@ def retreat():
     if __debug__:
         logging.debug("We have to go back to column %s", queen_column)
     show_retreating()
-    if (queen_column <= -1):
-        # Cannot retreat.
-        if __debug__:
-            logging.debug("Cannot retreat.")
-        return False
-    else:
+    if (queen_column > -1):
         # Try the next addmissible row after the one we tried last.
         search_list = admissible_rows[queen_column]
         if search_list:
@@ -186,8 +181,8 @@ def retreat():
         # Remove the Queen from the board.
         queen_row = queen_location[queen_column]
         row_lookup[queen_row] = False
-        slash_code_lookup[slash_code[queen_row,queen_column]] = False
-        backslash_code_lookup[backslash_code[queen_row,queen_column]] = False
+        slash_code_lookup[slash_code[queen_row][queen_column]] = False
+        backslash_code_lookup[backslash_code[queen_row][queen_column]] = False
         queen_location[queen_column] = -1
         if __debug__:
             logging.debug("Remove the queen from column %s", queen_column)
@@ -196,6 +191,11 @@ def retreat():
             logging.debug("backslash_code_lookup = %s", backslash_code_lookup)
             logging.debug("queen_location = %s", queen_location)
         return True
+    else:
+        # Cannot retreat.
+        if __debug__:
+            logging.debug("Cannot retreat.")
+        return False
 
 def retreat_wrapper(success_flag):
     """A wrapper to handle the different behavior need because of
@@ -229,6 +229,54 @@ def retreat_wrapper(success_flag):
         pass
     return more_to_search
 
+def get_search_list_2():
+    """Get the admissible rows by filtering several functions
+       interatively and short circuiting early if none free.
+
+    """
+
+    def row_check(sr):
+        return not row_lookup[sr]
+    def slash_check(sr):
+        return not slash_code_lookup[slash_code[sr][queen_column]]
+    def backslash_check(sr):
+        return not backslash_code_lookup[backslash_code[sr][queen_column]]
+
+    empty_list = []
+    search_list = list(filter(row_check, row_indices))
+    if search_list:
+        # Got free ones so far.
+        search_list = list(filter(slash_check, search_list))
+        if search_list:
+            # Got free ones so far.
+            search_list = list(filter(backslash_check, search_list))
+            if search_list:
+                # Got non empty search_list.
+                return search_list
+            else:
+                # Nothing free.
+                return empty_list
+        else:
+            # Nothing free.
+            return empty_list
+    else:
+        # Nothing free.
+        return empty_list
+
+def get_search_list_1():
+    """Get the admissible rows by filtering a function over the
+       row_indices checking for freedom in all directions at once.
+
+    """
+
+    def free_row(sr):
+        return not (slash_code_lookup[slash_code[sr][queen_column]]
+                    or backslash_code_lookup[backslash_code[sr][queen_column]]
+                    or row_lookup[sr])
+    # Get all the remaining admissible rows for queen_column; if any.
+    search_list = list(filter(free_row, row_indices))
+    return search_list
+
 def initialize_admissible_rows():
     """For the current number_of_rows and queen_column, finds all the
        admissible rows. Then if there are any such rows, pop the first
@@ -240,18 +288,16 @@ def initialize_admissible_rows():
     global try_row
     global admissible_rows
 
-    def free_row(sr):
-        return not (slash_code_lookup[slash_code[sr,queen_column]]
-                    or backslash_code_lookup[backslash_code[sr,queen_column]]
-                    or row_lookup[sr])
-
     # Get all the remaining admissible rows for queen_column; if any.
-    search_list = list(filter(free_row, row_indices))
+    search_list = get_search_list_1()
     if __debug__:
         logging.debug("search_list = %s", search_list)
 
     if search_list:
         # Set the next row location to try putting the Queen.
+        # Last
+        # try_row = search_list.pop()
+        # or first doesn't seem to matter in finding all solutions.
         try_row = search_list.pop(0)
         if __debug__:
             logging.debug("try_row = %s", try_row)
@@ -283,8 +329,8 @@ def advance():
     show_advancing()
     queen_location[queen_column] = try_row
     row_lookup[try_row] = True
-    slash_code_lookup[slash_code[try_row,queen_column]] = True
-    backslash_code_lookup[backslash_code[try_row,queen_column]] = True
+    slash_code_lookup[slash_code[try_row][queen_column]] = True
+    backslash_code_lookup[backslash_code[try_row][queen_column]] = True
     queen_column += 1
     node_count += 1
     total_node_count += 1
@@ -297,11 +343,11 @@ def advance():
         logging.debug("node_count = %s", node_count)
         logging.debug("total_node_count = %s", total_node_count)
 
-    if (queen_column > number_of_columns - 1):
-        return False
-    else:
+    if (queen_column <= number_of_columns - 1):
         initialize_admissible_rows()
         return True
+    else:
+        return False
 
 def search():
     """Search for a solution and return True if found else False"""
@@ -324,7 +370,12 @@ def search():
             #       try_row = next row to try or number_of_rows
             if __debug__:
                 logging.debug("Try advancing.")
-            if (advance() == False):
+            if (advance() == True):
+                if __debug__:
+                    logging.debug("Advancing worked.")
+                # queen_column <= number_of_columns - 1
+                pass
+            else:
                 # We found a solution. NB: queen_column = number_of_columns
                 if __debug__:
                     logging.debug("Found a solution.")
@@ -337,11 +388,6 @@ def search():
                     more_to_search = retreat_wrapper(success_flag)
                 else:
                     more_to_search = False
-            else:
-                if __debug__:
-                    logging.debug("Advancing worked.")
-                # queen_column <= number_of_columns - 1
-                pass
         else:
             if __debug__:
                 logging.debug("No more attempts in column %s", queen_column)
@@ -386,7 +432,7 @@ def initialize(size):
         logging.debug("number_of_columns = %s", number_of_columns)
 
     # Empty the Queen locations.
-    queen_location = np.full(number_of_columns, -1, dtype=np.intc)
+    queen_location = [-1] * number_of_columns
     if __debug__:
         logging.debug("queen_location = %s", queen_location)
 	
@@ -412,23 +458,21 @@ def initialize(size):
         logging.debug("solution_count = %s", solution_count)
 
     # Set our helper matrices for optimization.
-    slash_code = np.full((number_of_rows, number_of_columns),
-                         0, dtype=np.uintc)
-    backslash_code = np.full((number_of_rows, number_of_columns),
-                             0, dtype=np.uintc)
+    slash_code = [[0 for j in range(0, number_of_columns)]
+                  for i in range(0, number_of_rows)]
+    backslash_code = [[0 for j in range(0, number_of_columns)]
+                      for i in range(0, number_of_rows)]
     for r in range(0, number_of_rows):
         for c in range(0, number_of_columns):
-            slash_code[r,c] = r + c
-            backslash_code[r,c] = r - c + number_of_columns - 1
+            slash_code[r][c] = r + c
+            backslash_code[r][c] = r - c + number_of_columns - 1
     if __debug__:
         logging.debug("slash_code = %s", slash_code)
         logging.debug("backslash_code = %s", backslash_code)
 
-    slash_code_lookup = np.full((number_of_columns + number_of_rows - 1),
-                                False, dtype=np.bool_)
-    backslash_code_lookup = np.full((number_of_columns + number_of_rows - 1),
-                                    False, dtype=np.bool_)
-    row_lookup = np.full(number_of_rows, False, dtype=np.bool_)
+    slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+    backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
+    row_lookup = [False] * (number_of_rows)
     if __debug__:
         logging.debug("slash_code_lookup = %s", slash_code_lookup)
         logging.debug("backslash_code_lookup = %s", backslash_code_lookup)
@@ -439,6 +483,7 @@ def initialize(size):
     # Initialize admissible_rows and try_row.
     initialize_admissible_rows()
     if __debug__:
+        logging.debug("row_indices = %s", row_indices)
         logging.debug("try_row = %s", try_row)
         logging.debug("admissible_rows = %s", admissible_rows)
 
@@ -477,31 +522,23 @@ def sanity_check_args(start, number_of_problems):
         print('error: Sorry. Limit is {} columns'.format(_MAX_COLUMNS))
         sys.exit(1)
 
-def run(args):
-    """Run the program with args already parsed"""
+def run(start=8, number_of_problems=1,
+        all_solutions = False,
+        progress = False,
+        count_only = False,
+        node_count = False,
+        total_node_count = False):
     global find_all_solutions
     global show_progress
     global show_count_only
     global show_node_count
     global show_total_node_count
 
-    sanity_check_args(args.start, args.number_of_problems)
-    start = int(args.start)
-    number_of_problems = int(args.number_of_problems)
-    if (args.all):
-        find_all_solutions = True
-    if (args.show_progress):
-        show_progress = True
-    if (args.show_count_only):
-        show_count_only = True
-    if (args.show_node_count):
-        show_node_count = True
-    if (args.show_total_node_count):
-        show_total_node_count = True
-    if (args.show_count_only):
-        show_count_only = True
-        show_node_count = False
-        show_total_node_count = False
+    find_all_solutions = all_solutions
+    show_progress = progress
+    show_count_only = count_only
+    show_node_count = node_count
+    show_total_node_count = total_node_count
 
     start_time = time.time()
     for size in range(start, start+number_of_problems):
@@ -541,6 +578,39 @@ def run(args):
     end_time = time.time()
     print("Execution time in secs was {}".format(end_time-start_time))
 
+def run_with_args(args):
+    """Run the program with args already parsed"""
+    global find_all_solutions
+    global show_progress
+    global show_count_only
+    global show_node_count
+    global show_total_node_count
+
+    sanity_check_args(args.start, args.number_of_problems)
+    start = int(args.start)
+    number_of_problems = int(args.number_of_problems)
+    if (args.all):
+        find_all_solutions = True
+    if (args.show_progress):
+        show_progress = True
+    if (args.show_count_only):
+        show_count_only = True
+    if (args.show_node_count):
+        show_node_count = True
+    if (args.show_total_node_count):
+        show_total_node_count = True
+    if (args.show_count_only):
+        show_count_only = True
+        show_node_count = False
+        show_total_node_count = False
+
+    run(start, number_of_problems,
+        find_all_solutions,
+        show_progress,
+        show_count_only,
+        show_node_count,
+        show_total_node_count)
+
 def main():
     """Main code with command line parser"""
     parser = argparse.ArgumentParser(description="Solve N-queen problems")
@@ -558,7 +628,7 @@ def main():
                         help="show total node counts")
     parser.add_argument('--show_count_only', action='store_true',
                         help="show solution counts only")
-    parser.set_defaults(func=run)
+    parser.set_defaults(func=run_with_args)
     args = parser.parse_args()
     args.func(args)
 
