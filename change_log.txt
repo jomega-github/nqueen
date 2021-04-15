@@ -1,5 +1,12 @@
 Changelog for nqueen.py.
 
+- Version 1.5
+Date: 4/2/2021
+* Fixed the initializations of slash_code and backslash_code
+so that they match the math way of thinking of the arrays, which
+is almost the python way, and flipped the formulas between these
+two so that what they contain matches their name!
+
 - Version 1.4
 Date: 4/2/2021
 * Converted entirely to using 0 indexing.  Note that this causes the

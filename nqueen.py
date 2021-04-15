@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 1.4"""
+"""The N-Queens problem. Version 1.5"""
 
 import argparse
 import sys
@@ -47,10 +47,10 @@ solution_count = 0
 find_all_solutions = False
 
 # Optimization helper matrices
-slash_code = [[0 for i in range(0, number_of_rows)]
-              for j in range(0, number_of_columns)]
-backslash_code = [[0 for i in range(0, number_of_rows)]
-                  for j in range(0, number_of_columns)]
+slash_code = [[0 for j in range(0, number_of_columns)]
+              for i in range(0, number_of_rows)]
+backslash_code = [[0 for j in range(0, number_of_columns)]
+                  for j in range(0, number_of_rows)]
 row_lookup = [False] * (number_of_rows)
 slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
 backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
@@ -402,14 +402,14 @@ def initialize(size):
 
     # Set our helper matrices
     # Allocate space.
-    slash_code = [[0 for i in range(0, number_of_rows)]
-                  for j in range(0, number_of_columns)]
-    backslash_code = [[0 for i in range(0, number_of_rows)]
-                      for j in range(0, number_of_columns)]
+    slash_code = [[0 for j in range(0, number_of_columns)]
+                  for i in range(0, number_of_rows)]
+    backslash_code = [[0 for j in range(0, number_of_columns)]
+                      for i in range(0, number_of_rows)]
     for r in range(0, number_of_rows):
         for c in range(0, number_of_columns):
-            slash_code[r][c] = r - c + number_of_columns - 1
-            backslash_code[r][c] = r + c
+            slash_code[r][c] = r + c
+            backslash_code[r][c] = r - c + number_of_columns - 1
 
     slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
     backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
