@@ -1,5 +1,22 @@
 Change log for nqueen.py.
 
+- Version 2.4
+Date: 4/6/2021
+* initialize_admissible_rows() now returns True if there are
+admissible rows and False otherwise. It now longer sets a
+fake value of try_row to signal this.
+* store_and_check_for_solution() places the current Queen on the board. If
+this is a solution return True; otherwise return False
+* search() no longer has an if-statement looking for the fake value
+of try_row. Instead if calls store_and_check_for_solution().
+If that returns False then initialize_admissible_rows() is called.
+If that returns true then searching continues. Otherwise retreat()
+is called.
+If store_and_check_for_solution() returns True then we have a solution.
+If we are finding all solutions then retreat() is called.
+retreat() is passed whether there has been a success yet or not.
+* Spelling changes.
+
 - Version 2.3
 Date: 4/6/2021
 * retreat() redone for clarity and efficiency. retreat_wrapper removed.

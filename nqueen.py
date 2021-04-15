@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""The N-Queens problem. Version 2.3"""
+"""The N-Queens problem. Version 2.4"""
 
 import argparse
 import sys
@@ -61,6 +61,7 @@ find_all_solutions = False
 # of rows is top down!
 # slash_code assigns to each square on the board a diagonal number.
 # These are positive slope diagonals. "/" oriented; hence the name.
+# The values are indices into the "*_lookup" arrays below.
 # Will be...
 # slash_code = [[0 for _ in range(0, number_of_columns)]
 #                for _ in range(0, number_of_rows)]
@@ -76,7 +77,7 @@ backslash_code = []
 # row_lookup = [False] * (number_of_rows)
 # slash_code_lookup records if a positive diagonal is occupied by some Queen.
 # slash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
-# backslash_code_lookup records is a negative diagonal is occupied.
+# backslash_code_lookup records if a negative diagonal is occupied.
 # backslash_code_lookup = [False] * (number_of_columns + number_of_rows - 1)
 row_lookup = []
 slash_code_lookup = []
@@ -123,6 +124,7 @@ def show_found_solution():
 
 def show_no_solution():
     """Show that we did not find a solution"""
+
     if show_progress:
         print("@")
     if show_node_count:
@@ -140,6 +142,7 @@ def show_no_more_solutions():
 
 def print_solution():
     """Print a solution"""
+
     if show_count_only:
         return
 
@@ -162,7 +165,7 @@ def retreat(success_flag):
        notifies of either no solution, or no more solutions if one had
        already been found so indicated by success_flag, and returns False.
 
-       Otherwise as long as retreat() is searching it first removes the Queen
+       Otherwise as long as retreat() is searching, it first removes the Queen
        and associated attacking information for further tries.
 
        If a new column and row to try are found then queen_column contains
@@ -175,8 +178,9 @@ def retreat(success_flag):
        Note: success_flag is passed in True if we've found some solution
        already; otherwise it is False.
 
-       Complicated by handling different behavior need because of adding
-       the ability to find all solutions and for performance.
+       retreat() is complicated by handling different behavior needed
+       because of adding the ability to find all solutions, and for
+       performance.
 
     """
 
@@ -286,8 +290,8 @@ def initialize_admissible_rows():
     """For the current number_of_rows and queen_column, finds all the
        admissible rows. Then if there are any such rows, pop the first
        admissible row into try_row and save the remainder in
-       admissible_rows[queen_column]. Otherwise, set try_row to
-       number_of_rows to indicate no more rows to try.
+       admissible_rows[queen_column]; return True. Otherwise, return
+       False.
 
     """
     global try_row
@@ -303,15 +307,15 @@ def initialize_admissible_rows():
         try_row = search_list.pop(0)
         # Save the remaining admissible rows if any.
         admissible_rows[queen_column] = search_list
+        return True
     else:
-        # Stop the searching.
-        try_row = number_of_rows
+        # No admissible rows.
+        return False
 
 
-def advance():
-    """Place the current Queen on the board and prepare to
-       try the next column. Return False if all the Queens are
-       placed. Otherwise return True.
+def store_and_check_for_solution():
+    """Place the current Queen on the board. If this is a solution
+       return True; otherwise return False
 
     """
     global queen_location
@@ -332,10 +336,11 @@ def advance():
     total_node_count += 1
 
     if queen_column <= number_of_columns - 1:
-        initialize_admissible_rows()
-        return True
-    else:
+        # No solution yet.
         return False
+    else:
+        # We have a solution.
+        return True
 
 
 def search():
@@ -349,37 +354,29 @@ def search():
 
     more_to_search = True
     while more_to_search:
-        if try_row <= number_of_rows - 1:
-            # Store the info and see if we have a solution.
-            # Note: After calling advance() we have
-            #       queen_location[queen_column] = try_row
-            #       queen_column += 1
-            #       try_row = next row to try or number_of_rows
-            if advance():
-                # queen_column <= number_of_columns - 1
+        assert try_row <= number_of_rows - 1
+        # Store the info and see if we have a solution.
+        if not store_and_check_for_solution():
+            # No solution yet.
+            if initialize_admissible_rows():
                 pass
             else:
-                # We found a solution. NB: queen_column = number_of_columns
-                success_flag = True
-                show_found_solution()
-                print_solution()
-                solution_count += 1
-                node_count = 0
-                if find_all_solutions:
-                    more_to_search = retreat(success_flag)
-                else:
-                    more_to_search = False
+                # We could not place the next Queen anywhere.
+                # Try to back out the last Queen assignment and prepare
+                # to try the next possibility.
+                more_to_search = retreat(success_flag)
         else:
-            # We could not place the current Queen.
-            # Try to back out the last Queen assignment and prepare
-            # to try the next possibility.
-            # Note: After calling retreat_wrapper() we have
-            #       queen_column -= 1
-            #       As long as queen_column > -1 we have
-            #       try_row = next row to try or number_of_rows
-            #       queen_location[queen_column] = -1
-            more_to_search = retreat(success_flag)
-    return success_flag        
+            # We found a solution.
+            success_flag = True
+            show_found_solution()
+            print_solution()
+            solution_count += 1
+            node_count = 0
+            if find_all_solutions:
+                more_to_search = retreat(success_flag)
+            else:
+                more_to_search = False
+    return success_flag
 
 
 def initialize(size):
@@ -436,11 +433,12 @@ def initialize(size):
     row_indices = list(range(0, number_of_rows))
 
     # Initialize admissible_rows and try_row.
-    initialize_admissible_rows()
-
+    if not initialize_admissible_rows():
+        print("Error: initialization fail!!")
+    
 
 def check_num(s):
-    """check that a string is an integer"""
+    """Check that a string is an integer."""
     try:
         int(s)
         return True
@@ -449,7 +447,7 @@ def check_num(s):
 
 
 def sanity_check_args(start, number_of_problems):
-    """sanity check the users arguments"""
+    """Sanity check the users arguments."""
 
     if check_num(start):
         start = int(start)
@@ -476,7 +474,8 @@ def sanity_check_args(start, number_of_problems):
         sys.exit(1)
 
 
-# noinspection PyShadowingNames,SpellCheckingInspection
+# noinspection SpellCheckingInspection
+# Previous comment is for IntelliJ to stop complaining.
 def run(start=8, number_of_problems=1,
         fas=False,
         sp=False,

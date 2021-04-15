@@ -18844,7 +18844,7 @@ Found all solutions to the 10-Queen problem.
 Total solutions found to the 10-Queen problem is 724
 Searched 35538 total nodes.
 ----------------------------------------
-Execution time in secs was 1.7648484706878662
+Execution time in secs was 1.7949810028076172
 
 output12-1.txt
 Looking for all solutions to the 12-Queen problem.
