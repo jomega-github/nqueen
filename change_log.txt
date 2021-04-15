@@ -1,5 +1,9 @@
 Change log for nqueen.py.
 
+- Version 2.3
+Date: 4/6/2021
+* retreat() redone for clarity and efficiency. retreat_wrapper removed.
+
 - Version 2.2
 Date: 4/6/2021
 * Removed all debug and logging!
