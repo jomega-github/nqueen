@@ -1,5 +1,12 @@
 Change log for nqueen.py.
 
+- Version 2.1
+Date: 4/6/2021
+* Fixed a number of PEP8 and typo problems.
+* Removed trailing semicolon. (The python compiler had accepted that!)
+* List comprehension "_" variable instead of i,j.
+* Unnecessary parens removed.
+
 - Version 2.0
 Date: 4/5/2021
 * I took the range out of the filter in initialize_admissible_rows()

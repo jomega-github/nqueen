@@ -1,29 +1,29 @@
-Looking for all solutions to the 1-Queen problem
+Looking for all solutions to the 1-Queen problem.
 +0!
 Searched 1 nodes.
 Q
 ---------------------
 -0--1#
 Searched 0 nodes.
-All solutions found to 1-Queen
-Total solutions found 1 for 1-Queen
+Found all solutions to the 1-Queen problem.
+Total solutions found to the 1-Queen problem is 1
 Searched 1 total nodes.
 ----------------------------------------
-Looking for all solutions to the 2-Queen problem
+Looking for all solutions to the 2-Queen problem.
 +0-0+0-0--1@
 Searched 2 nodes.
-No solution to 2-Queen
-Total solutions found 0 for 2-Queen
+No solution to the 2-Queen problem.
+Total solutions found to the 2-Queen problem is 0
 Searched 2 total nodes.
 ----------------------------------------
-Looking for all solutions to the 3-Queen problem
+Looking for all solutions to the 3-Queen problem.
 +0+1-1-0+0-0+0+1-1-0--1@
 Searched 5 nodes.
-No solution to 3-Queen
-Total solutions found 0 for 3-Queen
+No solution to the 3-Queen problem.
+Total solutions found to the 3-Queen problem is 0
 Searched 5 total nodes.
 ----------------------------------------
-Looking for all solutions to the 4-Queen problem
+Looking for all solutions to the 4-Queen problem.
 +0+1-1+1+2-2-1-0+0+1+2+3!
 Searched 8 nodes.
 --Q-
@@ -41,11 +41,11 @@ Q---
 -3-2-1-0+0+1
 +2-2-1+1-1-0--1#
 Searched 4 nodes.
-All solutions found to 4-Queen
-Total solutions found 2 for 4-Queen
+Found all solutions to the 4-Queen problem.
+Total solutions found to the 4-Queen problem is 2
 Searched 16 total nodes.
 ----------------------------------------
-Looking for all solutions to the 5-Queen problem
+Looking for all solutions to the 5-Queen problem.
 +0+1+2+3+4!
 Searched 5 nodes.
 Q----
@@ -132,11 +132,11 @@ Q----
 -4-3-2
 -1-0--1#
 Searched 0 nodes.
-All solutions found to 5-Queen
-Total solutions found 10 for 5-Queen
+Found all solutions to the 5-Queen problem.
+Total solutions found to the 5-Queen problem is 10
 Searched 53 total nodes.
 ----------------------------------------
-Looking for all solutions to the 6-Queen problem
+Looking for all solutions to the 6-Queen problem.
 +0+1+2+3+4-4-3-2+2+3-3-2-1+1+2+3+4-4-3-2+2+3-3-2-1+1
 +2+3+4-4-3-2-1+1+2+3-3-2+2+3-3-2-1-0+0+1+2+3+4-4-3-2
 +2+3+4+5!
@@ -186,11 +186,11 @@ Q-----
 +0+1+2+3-3-2+2+3-3-2-1+1+2+3+4-4-3-2-1+1+2+3-3-2+2+3
 +4-4-3-2-1+1+2+3-3-2+2+3+4-4-3-2-1-0--1#
 Searched 25 nodes.
-All solutions found to 6-Queen
-Total solutions found 4 for 6-Queen
+Found all solutions to the 6-Queen problem.
+Total solutions found to the 6-Queen problem is 4
 Searched 152 total nodes.
 ----------------------------------------
-Looking for all solutions to the 7-Queen problem
+Looking for all solutions to the 7-Queen problem.
 +0+1+2+3+4-4-3+3+4+5+6!
 Searched 9 nodes.
 Q------
@@ -635,11 +635,11 @@ Q------
 -6
 -5-4-3+3+4-4-3-2-1-0--1#
 Searched 2 nodes.
-All solutions found to 7-Queen
-Total solutions found 40 for 7-Queen
+Found all solutions to the 7-Queen problem.
+Total solutions found to the 7-Queen problem is 40
 Searched 551 total nodes.
 ----------------------------------------
-Looking for all solutions to the 8-Queen problem
+Looking for all solutions to the 8-Queen problem.
 +0+1+2+3+4-4+4-4-3+3+4+5+6-6-5-4+4-4-3+3+4+5+6-6-5-4
 +4-4-3-2+2+3+4+5-5-4-3+3+4+5-5+5-5-4-3-2+2+3+4+5-5-4
 +4+5-5-4-3-2+2+3+4-4+4-4-3+3+4-4+4+5+6-6-5-4-3-2-1+1
@@ -1812,11 +1812,11 @@ Q-------
 +2+3+4-4+4+5+6-6-5-4-3+3+4-4+4+5+6-6-5-4-3+3+4-4+4-4
 -3-2-1-0--1#
 Searched 105 nodes.
-All solutions found to 8-Queen
-Total solutions found 92 for 8-Queen
+Found all solutions to the 8-Queen problem.
+Total solutions found to the 8-Queen problem is 92
 Searched 2056 total nodes.
 ----------------------------------------
-Looking for all solutions to the 9-Queen problem
+Looking for all solutions to the 9-Queen problem.
 +0+1+2+3+4+5-5-4+4-4+4-4-3+3+4+5+6-6-5-4+4-4+4+5+6-6
 +6-6-5-4-3+3+4+5+6-6-5+5+6-6-5-4+4+5-5-4-3+3+4+5-5-4
 +4-4-3-2+2+3+4+5-5-4+4+5-5-4-3+3+4+5+6+7+8!
@@ -6688,11 +6688,11 @@ Q--------
 +4+5+6-6-5+5+6-6-5-4-3+3+4+5+6-6+6-6-5-4+4-4+4+5+6-6
 -5-4-3+3+4-4+4-4+4+5-5-4-3-2-1-0--1#
 Searched 32 nodes.
-All solutions found to 9-Queen
-Total solutions found 352 for 9-Queen
+Found all solutions to the 9-Queen problem.
+Total solutions found to the 9-Queen problem is 352
 Searched 8393 total nodes.
 ----------------------------------------
-Looking for all solutions to the 10-Queen problem
+Looking for all solutions to the 10-Queen problem.
 +0+1+2+3+4+5-5+5-5-4+4+5+6+7-7-6-5-4+4-4+4-4-3+3+4+5
 +6-6-5+5+6+7-7-6-5-4+4+5-5-4+4+5+6-6+6-6-5-4+4+5+6-6
 +6-6-5-4-3+3+4+5+6-6+6+7-7-6-5+5+6-6-5-4+4+5-5-4+4+5
@@ -18840,8 +18840,8 @@ Q---------
 +6-6-5-4+4+5-5-4+4+5+6+7-7-6-5+5+6-6-5-4-3+3+4-4+4-4
 +4+5+6+7-7-6-5-4+4+5-5+5-5-4-3-2-1-0--1#
 Searched 92 nodes.
-All solutions found to 10-Queen
-Total solutions found 724 for 10-Queen
+Found all solutions to the 10-Queen problem.
+Total solutions found to the 10-Queen problem is 724
 Searched 35538 total nodes.
 ----------------------------------------
-Execution time in secs was 2.0523126125335693
+Execution time in secs was 1.8980894088745117
