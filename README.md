@@ -3,12 +3,13 @@
  
 <h2>Usage</h2>
 
+
+````
 usage: nqueen.py [-h] [--all] [--show_progress] [--show_node_count] [--show_total_node_count] [--no_print]
                 start number_of_problems
 
 Solve N-queen problems
 
-````
 positional arguments:  
   start                 minimum board starting size  
   number_of_problems    number of problems sizes to do  
