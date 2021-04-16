@@ -23,24 +23,6 @@ optional arguments:
   --no_print            do not print boards  
 ````
 
-> usage: nqueen.py [-h] [--all] [--show_progress] [--show_node_count] [--show_total_node_count] [--no_print]
->                 start number_of_problems
-> 
-> Solve N-queen problems
-> 
-> positional arguments:  
->   start                 minimum board starting size  
->   number_of_problems    number of problems sizes to do  
-> 
-> optional arguments:  
->   -h, --help            show this help message and exit  
->   --all                 find all solutions  
->   --show_progress       show progress  
->   --show_node_count     show node counts  
->   --show_total_node_count  
->                         show total node counts  
->   --no_print            do not print boards  
-
 <h1>Background</h1>
 
 This repository is my investigation into a specific algorithm for solving the N-Queen problem.
