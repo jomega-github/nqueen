@@ -1,4 +1,3 @@
-# nqueen
 <h1>The N-Queen problem.</h1>
   The problem is to put N Queens on an N by N chessboard such that none of them are attacking each other.
  
