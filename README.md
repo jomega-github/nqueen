@@ -1,5 +1,28 @@
-# nqueen
-The N-Queen problem.
+<h1>The N-Queen problem.</h1>
+  The problem is to put N Queens on an N by N chessboard such that none of them are attacking each other.
+ 
+<h2>Usage</h2>
+
+
+````
+usage: nqueen.py [-h] [--all] [--show_progress] [--show_node_count] [--show_total_node_count] [--no_print]
+                start number_of_problems
+
+Solve N-queen problems
+
+positional arguments:  
+  start                 minimum board starting size  
+  number_of_problems    number of problems sizes to do  
+
+optional arguments:  
+  -h, --help            show this help message and exit  
+  --all                 find all solutions  
+  --show_progress       show progress  
+  --show_node_count     show node counts  
+  --show_total_node_count  
+                        show total node counts  
+  --no_print            do not print boards  
+````
 
 <h1>Background</h1>
 
